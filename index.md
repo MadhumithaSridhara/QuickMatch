@@ -32,7 +32,8 @@ If time permits, we will also include a comparison with other approaches such as
 - Fine tuning/ prepare presentation
 
 ### References
-[1] 
+1. Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.
+2. "Implementing Regular Expressions." Implementing Regular Expressions. N.p., n.d. Web.[https://swtch.com/~rsc/regexp/regexp1.html] 
 
 ### TEAM
 Bharath Kumar M J & Madhumitha Sridhara
