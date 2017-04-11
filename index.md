@@ -31,5 +31,4 @@ If time permits, we will also include a comparison with other approaches such as
 
 
 ### TEAM
-Bharath Kumar M J
-Madhumitha Sridhara
+Bharath Kumar M J & Madhumitha Sridhara
