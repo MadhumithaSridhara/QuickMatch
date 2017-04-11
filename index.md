@@ -69,4 +69,4 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
 2. "Implementing Regular Expressions." Implementing Regular Expressions. N.p., n.d. Web.[https://swtch.com/~rsc/regexp/regexp1.html] 
 
 ### TEAM
-Bharath Kumar M J & Madhumitha Sridhara
+Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
