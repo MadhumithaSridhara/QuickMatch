@@ -17,6 +17,8 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 ### Goals and deliverables
 - A basic application in OpenCL that can perform parallel regular application matching on a bunch of textfiles
 - Performance analysis and comparison with sequential implementation
+
+
 If time permits, we will also include a comparison with other approaches such as word count. However, we feel word count approach is not always feasible as it can be expensive to create and maintain live index files for all data.
 
 
@@ -29,6 +31,8 @@ If time permits, we will also include a comparison with other approaches such as
 - Fine grained parallel implementation by breaking up lines
 - Fine tuning/ prepare presentation
 
+### References
+[1] 
 
 ### TEAM
 Bharath Kumar M J & Madhumitha Sridhara
