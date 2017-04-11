@@ -10,18 +10,18 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 
 
 #### Challenges
-SIMD divergence
-Host and device memory challenges
-Parallelizing generation of NFA
-Managing NFA divergence
-Sorting
+- SIMD divergence
+- Host and device memory challenges
+- Parallelizing generation of NFA
+- Managing NFA divergence
+- Sorting
 
 ##### Goals and deliverables
-Understand NFA
-Sequential implementation in openCL
-Coarse grained parallel implementation by dividing dataset into N partitions
-Fine grained parallel implementation by breaking up lines
-Fine tuning/ prepare presentation
+- Understand NFA
+- Sequential implementation in openCL
+- Coarse grained parallel implementation by dividing dataset into N partitions
+- Fine grained parallel implementation by breaking up lines
+- Fine tuning/ prepare presentation
 
 
 ```markdown
