@@ -3,8 +3,6 @@ This project implements a fast parallel regular expression matching using OpenCL
 
 You can use the [editor on GitHub](https://github.com/MadhumithaSridhara/15-418-Parallel-Project/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
 ### Background
 Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. 
 
@@ -16,7 +14,17 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 - Managing NFA divergence
 - Sorting
 
+### Resources
+
 ### Goals and deliverables
+- A basic application in OpenCL that can perform parallel regular application matching on a bunch of textfiles
+- Performance analysis and comparison with sequential implementation
+If time permits, we will also include a comparison with other approaches such as word count. However, we feel word count approach is not always feasible as it can be expensive to create and maintain live index files for all data.
+
+
+### Platform choice
+
+### Schedule
 - Understand NFA
 - Sequential implementation in openCL
 - Coarse grained parallel implementation by dividing dataset into N partitions
