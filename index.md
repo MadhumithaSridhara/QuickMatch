@@ -23,8 +23,10 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 ### Platform choice
 
 ### Schedule
-- Understand NFA
-- Sequential implementation in openCL
+* Week 1: Understand NFA 
+    * What we should do:
+    * What we actually did: 
+* Week 2: Sequential implementation in openCL
 - Coarse grained parallel implementation by dividing dataset into N partitions
 - Fine grained parallel implementation by breaking up lines
 - Fine tuning/ prepare presentation
