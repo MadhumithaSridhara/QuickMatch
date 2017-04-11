@@ -1,8 +1,6 @@
 ## Parallel Regular expression matching
 This project implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism across files as well as parallellism within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. This will use OpenCL to offload the regex matching to a GPU.
 
-You can use the [editor on GitHub](https://github.com/MadhumithaSridhara/15-418-Parallel-Project/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
-
 ### Background
 Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. 
 
@@ -32,23 +30,7 @@ If time permits, we will also include a comparison with other approaches such as
 - Fine tuning/ prepare presentation
 
 
-```markdown
-Syntax highlighted code block
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
 
 For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
