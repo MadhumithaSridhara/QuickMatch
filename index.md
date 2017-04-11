@@ -1,4 +1,4 @@
-## Parallel Regular expression matching
+## Project Proposal
 QuickMatch implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. QuickMatch uses OpenCL to offload the regex matching to a GPU.
 
 ### Background
@@ -10,7 +10,7 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 - If SIMD Vectors are used to get speedup for fine-grained parallelism accross lines of text in files, there will be a serious issue of SIMD divergence as some vector lanes which find a match quickly will exit much before those which have to search for the expression till a new line character.
 - Since NFA is non deterministic, there are many ways to handle the situation where there are multiple next states (see [2]). One of the suggested ways is to maintain state for all possible paths and drop a path which ends in failure. This approach parallel paths in a thread of execution and has to be handled properly.
 - One of the rate limiting steps could be the generation of the NFA engine itself. Since the NFA engine depends on the input regex it can only be created at runtime. Parallellization as well as latency hiding (Hide the latency of host-to-memory transfer with this engine) techniques can be attempted to overcome this challenge 
-- Sorting
+- Since the regex matching will happen in parallel and out of order, the results will not appear in the order of files searched, this is not ideal for users. It might be useful to reorder and regroup the output according to the files. 
 
 ### Resources
 
