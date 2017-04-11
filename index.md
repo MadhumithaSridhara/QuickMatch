@@ -24,8 +24,8 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 
 ### Schedule
 * Week 1: Understand NFA 
-    * What we should do:
-    * What we actually did: 
+    * *What we should do*:
+    * *What we actually did*: 
 * Week 2: Sequential implementation in openCL
 - Coarse grained parallel implementation by dividing dataset into N partitions
 - Fine grained parallel implementation by breaking up lines
