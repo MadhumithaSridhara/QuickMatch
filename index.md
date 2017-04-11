@@ -6,7 +6,22 @@ You can use the [editor on GitHub](https://github.com/MadhumithaSridhara/15-418-
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
 ### Background
-Regular expression matching is 
+Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. 
+
+
+#### Challenges
+SIMD divergence
+Host and device memory challenges
+Parallelizing generation of NFA
+Managing NFA divergence
+Sorting
+
+##### Goals and deliverables
+Understand NFA
+Sequential implementation in openCL
+Coarse grained parallel implementation by dividing dataset into N partitions
+Fine grained parallel implementation by breaking up lines
+Fine tuning/ prepare presentation
 
 
 ```markdown
