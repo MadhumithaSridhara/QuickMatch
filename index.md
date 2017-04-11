@@ -9,14 +9,14 @@ Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://j
 Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. 
 
 
-#### Challenges
+### Challenges
 - SIMD divergence
 - Host and device memory challenges
 - Parallelizing generation of NFA
 - Managing NFA divergence
 - Sorting
 
-##### Goals and deliverables
+### Goals and deliverables
 - Understand NFA
 - Sequential implementation in openCL
 - Coarse grained parallel implementation by dividing dataset into N partitions
