@@ -1,8 +1,8 @@
 ## Parallel Regular expression matching
-This project implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism across files as well as parallellism within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. This will use OpenCL to offload the regex matching to a GPU.
+QuickMatch implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. QuickMatch uses OpenCL to offload the regex matching to a GPU.
 
 ### Background
-Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. 
+Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. Regular expression matching can be used at a very large scale especially in searching through large sized log and report files. Such applications will benefit greatly from QuickMatch.
 
 
 ### Challenges
@@ -30,14 +30,6 @@ If time permits, we will also include a comparison with other approaches such as
 - Fine tuning/ prepare presentation
 
 
-
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/MadhumithaSridhara/15-418-Parallel-Project/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### TEAM
+Bharath Kumar M J
+Madhumitha Sridhara
