@@ -2,7 +2,27 @@
 QuickMatch implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. QuickMatch uses OpenCL to offload the regex matching to a GPU.
 
 ### Background
-Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. Regular expression matching can be used at a very large scale especially in searching through large sized log and report files. Such applications will benefit greatly from QuickMatch. Thompson's construction algorithm converts a regular expression into a Nondeterministic Finite Automaton(NFA)or a finite state machine(FSM).
+Regular expression matching is used extensively in string-search, 'find' and 'find-and-replace' algorithms. Regular expression matching can be used at a very large scale especially in searching through large sized log and report files. Such applications will benefit greatly from QuickMatch. Thompson's construction algorithm converts a regular expression into a Nondeterministic Finite Automaton(NFA)or a finite state machine(FSM). Finding a pattern in large files is compute intensive, and we are trying to explore if GPUs can be exploited for this purpose. One aspect of parallelism is working on different lines in parallel, other is to work on different files. Apart from this, in order to use Thompson's NFA based algorithm, the NFA has to be constructed from the given regular expression. There is benefit in doing this faster. We want to try and explore if this can even be done. The below is a basic high level pseudo code of the algorithm : 
+
+~~~~
+Load the (directory/file), (regular expression)
+Construct NFA from the regular expression (Try parallelizing)
+if (directory) {
+   foreach file in directory (in parallel) {
+      parallel_regex_search();
+   }
+} else {
+   parallel_regex_search();
+}
+
+parallel_regex_search() {
+   foreach line in file (in parallel) {
+      if (match(regex)) {
+         print regex
+      }
+   }
+}
+~~~~
 
 
 ### Challenges
@@ -13,6 +33,10 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 - Since the regex matching will happen in parallel and out of order, the results will not appear in the order of files searched, this is not ideal for users. It might be useful to reorder and regroup the output according to the files. 
 
 ### Resources
+We plan to use the Xeon Phis available to us in the intel cluster to test our code. The main resources we'll be using are these two:
+- NFA paper by Thompson\[[1](https://dx.doi.org/10.1145%2F363347.363387)\]
+- Russ Cox's implementation of the Thompson NFA in C\[[2](https://swtch.com/~rsc/regexp/nfa.c.txt)\]
+- Russ Cox's excellent blog on regular expressions\[[3](https://swtch.com/~rsc/regexp/regexp1.html)\]
 
 ### Goals and deliverables
 - A basic application in OpenCL that can perform parallel regular application matching on a bunch of textfiles
@@ -21,6 +45,7 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 
 
 ### Platform choice
+We plan to use the Intel Xeon Phis available to us provided by Intel, which we used in assignment3. We want to test our code mainly on this.
 
 ### Schedule
 * Week 1: Understand Thompson's NFA algorithm for regex matching
