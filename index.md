@@ -23,13 +23,21 @@ Regular expression matching is used extensively in string-search, 'find' and 'fi
 ### Platform choice
 
 ### Schedule
-* Week 1: Understand NFA 
-    * *What we should do*:
+* Week 1: Understand Thompson's NFA algorithm for regex matching
+    * *What we should do*: We plan to use the starter code provided in Russ Cox's website [2] and understand how the sequential implementation works. We will also find sample input files which can serve as benchmarks for performance.
     * *What we actually did*: 
 * Week 2: Sequential implementation in openCL
-- Coarse grained parallel implementation by dividing dataset into N partitions
-- Fine grained parallel implementation by breaking up lines
-- Fine tuning/ prepare presentation
+    * *What we should do*: We will port the code to OpenCL and run the sequential version of the code on the GPU. This step will also help us figure out how the input and output transfers will need to be done.
+    * *What we actually did*: 
+* Week 3: Coarse grained parallel implementation 
+    * *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
+    * *What we actually did*: 
+* Week 4: Fine grained parallel implementation
+    * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
+    * *What we actually did*: 
+* Week 5: Fine tuning/ prepare presentation
+    * *What we should do*: Run benchmarks, collect results and look for scopes for improvement. Also prepare for the final demo and presentation. This week will also serve as a buffer in case any of the steps take longer than expected.
+    * *What we actually did*: 
 
 ### References
 1. Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.
