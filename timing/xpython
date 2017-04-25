@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+import sys, re
+
+l = sys.argv
+l.pop(0)
+regexp = l.pop(0)
+p = re.compile(regexp)
+for s in l:
+	m = re.match(p, s)
+	if m is not None:
+		print s

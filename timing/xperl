@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+my $re = $ARGV[0];
+shift @ARGV;
+foreach $s (@ARGV) {
+	if ($s =~ $re) {
+		print "$s\n";
+	}
+}

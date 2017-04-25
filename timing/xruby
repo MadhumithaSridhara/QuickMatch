@@ -1,0 +1,9 @@
+#!/usr/bin/ruby
+
+re = ARGV[0]
+for i in (1..ARGV.length)
+	if ARGV[i] =~ /#{re}/
+		print ARGV[i]
+		print "\n"
+	end
+end

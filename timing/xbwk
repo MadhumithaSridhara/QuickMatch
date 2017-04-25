@@ -1,0 +1,10 @@
+#!/home/rsc/bin/bwk -f
+
+BEGIN {
+	re = ARGV[1]
+	for(i=2; i<ARGC; i++){
+		if(ARGV[i] ~ re){
+			print ARGV[i];
+		}
+	}
+}

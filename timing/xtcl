@@ -1,0 +1,9 @@
+#!/usr/bin/tclsh
+
+set re [lindex $argv 0]
+set argv [lrange $argv 1 end]
+foreach s $argv {
+	if [regexp $re $s match] {
+		puts $s
+	}
+}

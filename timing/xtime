@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+
+use Time::HiRes qw(gettimeofday);
+
+my @t0 = (0, 0);
+
+$two = 0;
+$simple = 0;
+if ($ARGV[0] eq "-2"){
+	$two = 1;
+	shift @ARGV;
+}
+if ($ARGV[0] eq "-s"){
+	$simple = 1;
+	shift @ARGV;
+}
+
+open OUT, ">&STDOUT";
+
+sub atime {
+	if($t0[0] == 0){
+		@t0 = gettimeofday();
+	}
+	my @t = gettimeofday();
+	return ($t[0] - $t0[0]) + ($t[1] - $t0[1]) * 1e-6;
+}
+
+sub time1 {
+	my ($prog, $i, $n) = @_;
+	@prog = split(/\s+/, $prog);
+	if($simple){
+		$s = "a" x $i;
+		$re = ("a?" x $i) . ("a" x $i);
+	}elsif($two){
+		$s = ("a" x (2*$i)) . "z";
+		$re = ("(a|b)?" x (2*$i)) . ("(a|b)" x $i) . "z";
+	}else{
+		$re = ("(a|b)?" x $i) . ("(a|b)" x $i) . "z";
+		$s = ("a" x $i) . "z";
+	}
+	if($prog !~ /^x.fa/){
+		$re = "^$re\$";
+	}
+	($_, $_, $c0, $_) = times;
+	@s = (($s) x $n);
+	@a = (@prog, $re, @s);
+	# print STDERR "Running ", join(' | ', @a), "\n";
+	open(STDOUT, ">/tmp/xxx.xtime");
+	$m0 = atime();
+	system @a;
+	$m1 = atime();
+	close(STDOUT);
+	($_, $_, $c1, $_) = times;
+	@s = stat("/tmp/xxx.xtime");
+	$wrong = "";
+	if($s[7] != $n * (length($s) + 1)){
+		$wrong = " wrong";
+	}
+	$c1 -= $c0;
+	$c1 /= $n;
+	$m1 -= $m0;
+	$m1 /= $n;
+	return ($m1, $c1, $wrong);
+}
+
+if($ARGV[0] eq "-1") {
+	($m, $c, $w) = time1($ARGV[1], $ARGV[2], $ARGV[3]);
+	printf OUT "%s %d %d %.06f %.06f%s\n",
+		$ARGV[1], $ARGV[2], $ARGV[3], $m, $c, $w;
+	exit 0;
+}
+
+$T = 5;
+# open(STDERR, ">/dev/null");
+foreach $prog (@ARGV) {
+	for($i=1; $i<=100; $i++){
+		($m, $c, $w) = time1($prog, $i, 1);
+		# Try to take $T seconds of CPU.
+		if($m*10 < $T && !$w){
+			($m, $c, $w) = time1($prog, $i, 10);
+		}
+		if($m*100 < $T && !$w){
+			($m, $c, $w) = time1($prog, $i, 100);
+		}
+		if($m*1000 < $T && !$w){
+			($m, $c, $w) = time1($prog, $i, 1000);
+		}
+		$N = 1;
+		if($m*1000 < $T){
+			$n = 1000;
+			$N = $T/($m*1000);
+			if($N > 10){
+				$N = 10;
+			}
+		}elsif($m >= $T){
+			$n = 1;
+		}else{
+			$n = int($T/$m);
+		}
+		$M = 0;
+		$C = 0;
+		$w = 0;
+		for($k=0; $k<$N && !$w; $k++){
+			($m, $c, $w) = time1($prog, $i, $n);
+			$M += $m;
+			$C += $c;
+		}
+		printf OUT "%s %3d %5d %.07f %.07f%s\n", $prog, $i, $n*$k, $M/$k, $C/$k, $w;
+		last if $w;
+		last if $C > 60;
+	}
+}
+

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+re=$1
+file=$2
+grep "$re" $file
