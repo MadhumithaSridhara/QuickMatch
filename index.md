@@ -50,10 +50,11 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
 ### Schedule
 * Week 1: Understand Thompson's NFA algorithm for regex matching
     * *What we should do*: We plan to use the starter code provided in Russ Cox's website [2] and understand how the sequential implementation works. We will also find sample input files which can serve as benchmarks for performance.
-    * *What we actually did*: 
+    * *What we actually did*: Figured out that there are some bugs in the starter code and it doesn't always work the way we need it to. Making fixes to the starter code for it to work like Grep.
 * Week 2: Sequential implementation in openCL
     * *What we should do*: We will port the code to OpenCL and run the sequential version of the code on the GPU. This step will also help us figure out how the input and output transfers will need to be done.
-    * *What we actually did*: 
+    * *What we actually did*: Ran example codes on OpenCL on personal laptops and started porting the NFA code to OpenCL.
+    
 * Week 3: Coarse grained parallel implementation 
     * *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
     * *What we actually did*: 
