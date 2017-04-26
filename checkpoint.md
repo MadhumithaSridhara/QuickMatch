@@ -1,4 +1,5 @@
-## Checkpoint
+## [Project Proposal](https://madhumithasridhara.github.io/QuickMatch)
+## Project Checkpoint
 
 ### Work Done
 Till now, we have understood the naive nfa.c code written by Russ Cox. We had to make a few changes to accomodate our requirements - specifically, the code was not matching whole words like grep does. So we had to modify the code to do that. Also, file handling was not in place, which we fixed. We got a sequential basic nfa regex matcher code working, similar to basic grep functionality. We ran the program and compared it with how grep performs on a few datasets of different types of workload.
