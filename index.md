@@ -65,12 +65,14 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
    * *What we actually did*: 
 * Week 4: Fine grained parallel implementation
    * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
-    1. First Half:
-    2. Second Half:
+    1. First Half: Complete the parallel code using OpenCL on one platform (MacBook? with Intel Integrated HD graphics )
+    2. Second Half: Get a working version of the code on a different platform (latedays Xeon Phi?) and try optimizing it
     
     * *What we actually did*: 
 * Week 5: Fine tuning/ prepare presentation
     * *What we should do*: Run benchmarks, collect results and look for scopes for improvement. Also prepare for the final demo and presentation. This week will also serve as a buffer in case any of the steps take longer than expected.
+    1. First Half: Run QuickMatch with different datasets / different architectures and observe performance. Try to improve any common bottlenecks and characterize the memory/compute usage.
+    2. Second Half: Buffer and prepare for the presentation.
     * *What we actually did*: 
 
 ### References
