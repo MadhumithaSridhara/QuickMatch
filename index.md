@@ -58,10 +58,11 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
     * *What we actually did*: Ran example codes on OpenCL on personal laptops and started porting the NFA code to OpenCL.
     
 * Week 3: Coarse grained parallel implementation 
-   * First Half: Complete porting the NFA code to OpenCL and modify to allow single threaded version to "dispatch" to device using OpenCL
-   * Second Half: Start parallellizing the code by breaking up the data into partitions to be read by different instances of the kernel
-    ** *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
-    ** *What we actually did*: 
+   1. First Half: Complete porting the NFA code to OpenCL and modify to allow single threaded version to "dispatch" to device using OpenCL
+   2. Second Half: Start parallellizing the code by breaking up the data into partitions to be read by different instances of the kernel
+
+   * *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
+   * *What we actually did*: 
 * Week 4: Fine grained parallel implementation
     First Half:
     Second Half:
