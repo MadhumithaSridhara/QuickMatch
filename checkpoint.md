@@ -30,7 +30,8 @@ user	0m3.866s
 sys	0m0.237s
 ```
 
-
 ### Concerns
 One concern we have is that OpenCL is not installed on either the andrew machines, or GHC machines, or latedays cluster. It'd be great if we can leverage the Xeon Phi's on the latedays cluster using OpenCL. Apart from that we think it's a matter of getting the logic right and coding it out.
 
+### Updated Schedule
+The project proposal page has the updated schedule
