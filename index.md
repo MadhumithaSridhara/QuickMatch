@@ -58,15 +58,16 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
     * *What we actually did*: Ran example codes on OpenCL on personal laptops and started porting the NFA code to OpenCL.
     
 * Week 3: Coarse grained parallel implementation 
+   * *What we should do*
    1. First Half: Complete porting the NFA code to OpenCL and modify to allow single threaded version to "dispatch" to device using OpenCL
    2. Second Half: Start parallellizing the code by breaking up the data into partitions to be read by different instances of the kernel
-
-   * *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
+   
    * *What we actually did*: 
 * Week 4: Fine grained parallel implementation
-    First Half:
-    Second Half:
-    * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
+   * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
+    1. First Half:
+    2. Second Half:
+    
     * *What we actually did*: 
 * Week 5: Fine tuning/ prepare presentation
     * *What we should do*: Run benchmarks, collect results and look for scopes for improvement. Also prepare for the final demo and presentation. This week will also serve as a buffer in case any of the steps take longer than expected.
