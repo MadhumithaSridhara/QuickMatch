@@ -1,4 +1,6 @@
-## Project Proposal
+# [Project Proposal](https://madhumithasridhara.github.io/QuickMatch/)
+# [Project Checkpoint Report](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
+## Overview
 QuickMatch implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. QuickMatch uses OpenCL to offload the regex matching to a GPU.
 
 ### Background
@@ -66,8 +68,8 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
     * *What we actually did*: 
 
 ### References
-1. Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.
-2. "Implementing Regular Expressions." Implementing Regular Expressions. N.p., n.d. Web.[https://swtch.com/~rsc/regexp/regexp1.html] 
+1. [Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.](https://dx.doi.org/10.1145%2F363347.363387)
+2. [Implementing Regular Expressions. N.p., n.d. Web.](https://swtch.com/~rsc/regexp/regexp1.html)
 
 ### TEAM
 Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
