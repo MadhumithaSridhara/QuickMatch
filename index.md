@@ -1,4 +1,6 @@
+## [Project Checkpoint](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
 ## Project Proposal
+### Overview
 QuickMatch implements a fast parallel regular expression matching using OpenCL. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. QuickMatch uses OpenCL to offload the regex matching to a GPU.
 
 ### Background
@@ -56,18 +58,26 @@ We plan to use the Intel Xeon Phis available to us provided by Intel, which we u
     * *What we actually did*: Ran example codes on OpenCL on personal laptops and started porting the NFA code to OpenCL.
     
 * Week 3: Coarse grained parallel implementation 
-    * *What we should do*: Implement a naive parallel algorithm which breaks up the input data set into N partitions and each of the N processing elements in the GPU will work on one partition of the dataset. This step will help us understand the dependences and communication needed in this project.
-    * *What we actually did*: 
+   * *What we should do*
+   1. First Half: Complete porting the NFA code to OpenCL and modify to allow single threaded version to "dispatch" to device using OpenCL
+   2. Second Half: Start parallellizing the code by breaking up the data into partitions to be read by different instances of the kernel
+   
+   * *What we actually did*: 
 * Week 4: Fine grained parallel implementation
-    * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
+   * *What we should do*: This week we will use SIMD to get better performance on QuickMatch 
+    1. First Half: Complete the parallel code using OpenCL on one platform (MacBook? with Intel Integrated HD graphics )
+    2. Second Half: Get a working version of the code on a different platform (latedays Xeon Phi?) and try optimizing it
+    
     * *What we actually did*: 
 * Week 5: Fine tuning/ prepare presentation
     * *What we should do*: Run benchmarks, collect results and look for scopes for improvement. Also prepare for the final demo and presentation. This week will also serve as a buffer in case any of the steps take longer than expected.
+    1. First Half: Run QuickMatch with different datasets / different architectures and observe performance. Try to improve any common bottlenecks and characterize the memory/compute usage.
+    2. Second Half: Buffer and prepare for the presentation.
     * *What we actually did*: 
 
 ### References
-1. Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.
-2. "Implementing Regular Expressions." Implementing Regular Expressions. N.p., n.d. Web.[https://swtch.com/~rsc/regexp/regexp1.html] 
+1. [Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.](https://dx.doi.org/10.1145%2F363347.363387)
+2. [Implementing Regular Expressions. N.p., n.d. Web.](https://swtch.com/~rsc/regexp/regexp1.html)
 
 ### TEAM
 Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
