@@ -70,8 +70,8 @@ int main(int argc, char** argv)
 
 
     //int number_of_lines_read = ReadLineByLineFromTextFile(argv[1], &search_length,  linesizes ); 
-    char *regex = "aaa";
-    char *search_string = "aaaaaa";
+    char *regex = "aaa?";
+    char *search_string = "aaaaa";
     int result;
     regexMatchCuda(regex, strlen(regex), search_string, strlen(search_string), &result);
     // int i;

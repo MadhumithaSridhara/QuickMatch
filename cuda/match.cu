@@ -120,6 +120,7 @@ __shared__ State states[100];
     __device__ __inline__ State*
 state(int c, State *out, State *out1)
 {
+    printf("entering state function\n");
     State *s = &states[nstate];
 
     nstate++;
@@ -279,21 +280,16 @@ struct List
 __shared__ List l1, l2;
 __shared__ int listid;
 
-__device__ void addstate(List*, State*);
+__device__ void custom_addstate(List*, State*);
 __device__ __inline__ void step(List*, int, List*);
 
 /* Compute initial state list */
 __device__ __inline__ List*
 startlist(State *start, List *l)
 {
-    printf("starting startlist\n");
     l->n = 0;
-    printf("starting startlist\n");
     listid++;
-    printf("starting startlist\n");
-    printf("start : %c\n", start->c);
-    addstate(l, start);
-    printf("exiting startlist\n");
+    custom_addstate(l, start);
     return l;
 }
 
@@ -303,7 +299,7 @@ restartlist(List *l)
 {
     //printf("Resetting\n");
     l->n = 0;
-    addstate(l, start_state);
+    custom_addstate(l, start_state);
 }
 */
 /* Check whether state list contains a match. */
@@ -313,31 +309,41 @@ ismatch(List *l)
     int i;
 
     for(i=0; i<l->n; i++)
-        if(l->s[i] == &matchstate)
+        if(l->s[i]->c == Match)
             return 1;
     return 0;
 }
 
+
 /* Add s to l, following unlabeled arrows. */
 __device__ void
-addstate(List *l, State *s)
+custom_addstate(List *l, State *s)
 {
-    printf("starting addstate\n");
-    if(s == NULL || s->lastlist == listid)
-        return;
-    printf("not returning yet addstate\n");
-    s->lastlist = listid;
-    printf("set lastlist addstate\n");
-    if(s->c == Split){
-        /* follow unlabeled arrows */
-        addstate(l, s->out);
-        addstate(l, s->out1);
-        return;
+    List state_stack;
+
+    state_stack.n = 0;
+    #define push_to_stack(ss) state_stack.s[state_stack.n++] = ss
+    #define pop_stack() state_stack.s[--(state_stack.n)]
+    #define is_stack_empty() (state_stack.n == 0)
+
+    push_to_stack(s);
+    while(!is_stack_empty()) {
+        s = pop_stack();
+        if(s == NULL)
+            break;
+        // Surprisingly lastlist is not needed 
+    //    s->lastlist = listid;
+        if(s->c == Split){
+            // follow unlabeled arrows 
+            push_to_stack(s->out);
+            push_to_stack(s->out1);
+        } else {
+            l->s[l->n++] = s;
+        }
     }
-    printf("before accessing l addstate\n");
-    l->s[l->n++] = s;
-    printf("ending addstate\n");
-    //printf("Added new state\n");
+    #undef push_to_stack
+    #undef pop_stack
+    #undef is_stack_empty
 }
 
 /*
@@ -359,14 +365,14 @@ step(List *clist, int c, List *nlist)
         //printf("State %d value : %d\n", i, s->c);
         if(s->c == c) {
             //printf("Adding state\n");
-            addstate(nlist, s->out);
+            custom_addstate(nlist, s->out);
         }/* else {
         // testing code
         //printf("Lastlist : %d, listid : %d\n", s->lastlist, listid);
         //printf("Character value : %d\n", s->c);
         if (s->lastlist == (listid -1) && s->c == Match) {
         //printf("Adding matchstate\n");
-        addstate(nlist, &matchstate);
+        custom_addstate(nlist, &matchstate);
         } else {
         // Remove everything from list and start over
         restartlist(nlist);
@@ -390,7 +396,11 @@ match(State *start, char *s)
         c = *s & 0xFF;
         step(clist, c, nlist);
         t = clist; clist = nlist; nlist = t;    /* swap clist, nlist */
+        if (ismatch(clist)) {
+            return 1;
+        }
     }
+    printf("Before ismatch\n");
     return ismatch(clist);
 }
 
@@ -409,6 +419,7 @@ match_kernel(char* regex, int regex_length, char* search_string, int search_stri
 
         start = post2nfa(post);
         printf("start out : %c\n", start->out->c);
+        if (start->out1 != NULL)
         printf("start out1 : %c\n", start->out1->c);
         if(match(start, search_string)) {
             printf("%s\n", search_string);
@@ -434,8 +445,8 @@ regexMatchCuda(char* regex, int regex_length, char* search_string, int search_st
     // these buffers are used in the call to saxpy_kernel below
     // without being initialized.
     //
-    cudaMalloc(&device_regex, sizeof(char)*regex_length);
-    cudaMalloc(&device_search_string, sizeof(float)*search_string_length);
+    cudaMalloc(&device_regex, sizeof(char)*(regex_length+1));
+    cudaMalloc(&device_search_string, sizeof(float)*(search_string_length+1));
     cudaMalloc(&device_result, sizeof(int));
 
     // start timing after allocation of device memory.
@@ -444,8 +455,8 @@ regexMatchCuda(char* regex, int regex_length, char* search_string, int search_st
     //
     // TODO: copy input arrays to the GPU using cudaMemcpy
     //
-    cudaMemcpy(device_regex, regex, sizeof(char)*regex_length, cudaMemcpyHostToDevice);
-    cudaMemcpy(device_search_string, search_string, sizeof(char)*search_string_length, cudaMemcpyHostToDevice);
+    cudaMemcpy(device_regex, regex, sizeof(char)*(regex_length+1), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_search_string, search_string, sizeof(char)*(search_string_length+1), cudaMemcpyHostToDevice);
 
     //double kernelStartTime = CycleTimer::currentSeconds();
 
