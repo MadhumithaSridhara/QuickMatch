@@ -3,6 +3,11 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <driver_functions.h>
+#define MAX_NUMBER_OF_LINES 100000
+#define THREADS_PER_BLOCK 512
+#define NUMBER_OF_BLOCKS 40
+
+#include "CycleTimer.h"
 
 extern float toBW(int bytes, float sec);
 
@@ -120,7 +125,7 @@ __shared__ State states[100];
     __device__ __inline__ State*
 state(int c, State *out, State *out1)
 {
-    printf("entering state function\n");
+    //printf("entering state function\n");
     State *s = &states[nstate];
 
     nstate++;
@@ -129,7 +134,7 @@ state(int c, State *out, State *out1)
     s->c = c;
     s->out = out;
     s->out1 = out1;
-    printf("Adding new state : %c\n", s->c);
+   // printf("Adding new state : %c\n", s->c);
     return s;
 }
 
@@ -277,8 +282,7 @@ struct List
     State *s[100];
     int n;
 };
-__shared__ List l1, l2;
-__shared__ int listid;
+//__shared__ int listid;
 
 __device__ void custom_addstate(List*, State*);
 __device__ __inline__ void step(List*, int, List*);
@@ -288,7 +292,7 @@ __device__ __inline__ List*
 startlist(State *start, List *l)
 {
     l->n = 0;
-    listid++;
+  //  listid++;
     custom_addstate(l, start);
     return l;
 }
@@ -307,10 +311,12 @@ restartlist(List *l)
 ismatch(List *l)
 {
     int i;
-
     for(i=0; i<l->n; i++)
-        if(l->s[i]->c == Match)
+        if(l->s[i]->c == Match) {
+        //    printf("Inside ismatch() ret 1\n");
             return 1;
+        }
+  //  printf("Inside ismatch() returning 0\n");
     return 0;
 }
 
@@ -356,8 +362,8 @@ step(List *clist, int c, List *nlist)
 {
     int i;
     State *s;
-
-    listid++;
+//    printf("Inside step\n");
+  //  listid++;
     nlist->n = 0;
     //printf("Inside step. Evaluating %d\n", c);
     for(i=0; i<clist->n; i++){
@@ -384,15 +390,15 @@ step(List *clist, int c, List *nlist)
 
 /* Run NFA to determine whether it matches s. */
  __device__ __inline__    int
-match(State *start, char *s)
+match(State *start, char *s, List *l1, List *l2)
 {
-    int i, c;
+    int c;
     List *clist, *nlist, *t;
 
-    clist = startlist(start, &l1);
-    nlist = &l2;
+    clist = startlist(start, l1);
+    nlist = l2;
+   // printf("After startlist\n");
     for(; *s; s++){
-        //printf("Character : %c\n", *s);
         c = *s & 0xFF;
         step(clist, c, nlist);
         t = clist; clist = nlist; nlist = t;    /* swap clist, nlist */
@@ -400,45 +406,74 @@ match(State *start, char *s)
             return 1;
         }
     }
-    printf("Before ismatch\n");
+  //  printf("Before ismatch\n");
     return ismatch(clist);
 }
 
-__global__ void
-match_kernel(char* regex, int regex_length, char* search_string, int search_string_length, int* result) {
+
+__shared__ State *start;
+__global__ void match_kernel(char* regex, int regex_length, char* search_string, int search_string_length,
+                    int *linesizes, int number_of_lines, int* result) {
 
     char *post;
-    State *start;
     // compute overall index from position of thread in current block,
     // and given the block we are in
     int index = blockIdx.x * blockDim.x + threadIdx.x;       
+    List l1, l2;
 
-    if (index == 0) {
+    if(index > number_of_lines-1)
+        return;
+
+    //printf("Number of lines %d", number_of_lines);
+    if (threadIdx.x == 0) {
+       // post = re2post(my_pattern, regex_length);
         post = re2post(regex, regex_length);
-        printf("post : %s\n", post);
-
+        //printf("Post: %s", regex);
         start = post2nfa(post);
-        printf("start out : %c\n", start->out->c);
-        if (start->out1 != NULL)
-        printf("start out1 : %c\n", start->out1->c);
-        if(match(start, search_string)) {
-            printf("%s\n", search_string);
-            *result = 1;
+    }
+
+    int offset, end_offset, batchID = 0, batchOffset = 0;
+    
+    int BatchSize = NUMBER_OF_BLOCKS*THREADS_PER_BLOCK;
+    __syncthreads(); 
+    for(batchID = 0; (batchOffset + threadIdx.x) < number_of_lines; batchID++)
+    {
+        char my_search_string[120];
+        int i = 0;
+        offset = linesizes[max(index-1 + batchOffset, 0)];
+        end_offset = linesizes[index+batchOffset];
+        
+       // printf("\nIndex %d, Offset %d, EOff = %d", index, offset, end_offset);
+        for(int k = offset; k < end_offset; k++, i++)
+        {
+            my_search_string[i] = search_string[k];
         }
+        my_search_string[i] = '\0';
+        
+        for(i = 0; my_search_string[i] != '\0'; i++)
+        {
+            if(match(start, my_search_string+i, &l1, &l2)) {
+                printf("%s", my_search_string );
+                *result = 1;
+                break;
+            }
+        }
+        batchOffset += BatchSize;
     }
 }
 
-void
-regexMatchCuda(char* regex, int regex_length, char* search_string, int search_string_length, int* result) {    
+void regexMatchCuda(char* regex, int regex_length, char* search_string, 
+                int search_string_length, int *linesizes, int number_of_lines,  int* result) {    
 
     // compute number of blocks and threads per block
-    const int threadsPerBlock = 512;
-    const int blocks = 1;
+    const int threadsPerBlock = THREADS_PER_BLOCK;
+    const int blocks = NUMBER_OF_BLOCKS;
 
     char* device_regex;
     char* device_search_string;
     int* device_result;
-
+    int* device_linesizes;
+    
     //
     // TODO: allocate device memory buffers on the GPU using
     // cudaMalloc.  The started code issues warnings on build because
@@ -447,21 +482,24 @@ regexMatchCuda(char* regex, int regex_length, char* search_string, int search_st
     //
     cudaMalloc(&device_regex, sizeof(char)*(regex_length+1));
     cudaMalloc(&device_search_string, sizeof(float)*(search_string_length+1));
+    cudaMalloc(&device_linesizes, sizeof(int)*(MAX_NUMBER_OF_LINES));
     cudaMalloc(&device_result, sizeof(int));
 
     // start timing after allocation of device memory.
-    //double startTime = CycleTimer::currentSeconds();
+    double startTime = CycleTimer::currentSeconds();
 
     //
     // TODO: copy input arrays to the GPU using cudaMemcpy
     //
     cudaMemcpy(device_regex, regex, sizeof(char)*(regex_length+1), cudaMemcpyHostToDevice);
     cudaMemcpy(device_search_string, search_string, sizeof(char)*(search_string_length+1), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_linesizes, linesizes, sizeof(int)*MAX_NUMBER_OF_LINES, cudaMemcpyHostToDevice);
 
-    //double kernelStartTime = CycleTimer::currentSeconds();
+    double kernelStartTime = CycleTimer::currentSeconds();
 
     // run match_kernel on the GPU
-    match_kernel<<<blocks, threadsPerBlock>>>(device_regex, regex_length, device_search_string, search_string_length, device_result);
+    match_kernel<<<blocks, threadsPerBlock>>>(device_regex, regex_length, device_search_string, 
+                            search_string_length, device_linesizes, number_of_lines, device_result);
 
     //
     // TODO: insert timer here to time only the kernel.  Since the
@@ -473,7 +511,7 @@ regexMatchCuda(char* regex, int regex_length, char* search_string, int search_st
     cudaThreadSynchronize();
 
 
-    //double kernelEndTime = CycleTimer::currentSeconds();
+    double kernelEndTime = CycleTimer::currentSeconds();
     //
     // TODO: copy result from GPU using cudaMemcpy
     //
@@ -483,19 +521,20 @@ regexMatchCuda(char* regex, int regex_length, char* search_string, int search_st
     // The time elapsed between startTime and endTime is the total
     // time to copy data to the GPU, run the kernel, and copy the
     // result back to the CPU
-    //double endTime = CycleTimer::currentSeconds();
+    double endTime = CycleTimer::currentSeconds();
 
     cudaError_t errCode = cudaPeekAtLastError();
     if (errCode != cudaSuccess) {
         fprintf(stderr, "WARNING: A CUDA error occured: code=%d, %s\n", errCode, cudaGetErrorString(errCode));
     }
-
-    // double overallDuration = endTime - startTime;
-    // double kernelDuration = kernelEndTime - kernelStartTime;
-    // double transferDuration = kernelStartTime - startTime + endTime - kernelEndTime;
-    // printf("Overall time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
-    // printf("Kernel time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
-    // printf("Transfer time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * transferDuration, toBW(totalBytes, transferDuration));
+    
+     int totalBytes = 0;
+     double overallDuration = endTime - startTime;
+     double kernelDuration = kernelEndTime - kernelStartTime;
+     double transferDuration = kernelStartTime - startTime + endTime - kernelEndTime;
+     printf("Overall time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
+     printf("Kernel time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
+     printf("Transfer time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * transferDuration, toBW(totalBytes, transferDuration));
 
     //
     // TODO free memory buffers on the GPU

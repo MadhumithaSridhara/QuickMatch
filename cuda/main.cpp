@@ -3,10 +3,16 @@
 #include <getopt.h>
 #include <string>
 #include <string.h>
+#include <fcntl.h>	
+#include <sys/stat.h>	
+#include "CycleTimer.h"
+#define MAX_NUMBER_OF_LINES 100000
 
-void regexMatchCuda(char* regex, int regex_length, char* search_string, int search_string_length, int* result);
+#define THREADS_PER_BLOCK 512
+#define NUMBER_OF_BLOCKS 40
+void regexMatchCuda(char* regex, int regex_length, char* search_string, 
+                int search_string_length, int *linesizes, int number_of_lines,  int* result);   
 void printCudaInfo();
-
 
 // return GB/s
 float toBW(int bytes, float sec) {
@@ -20,7 +26,7 @@ void usage(const char* progname) {
     printf("  -n  --arraysize <INT>  Number of elements in arrays\n");
     printf("  -?  --help             This message\n");
 }
-/*
+
 static FILE *
 OpenTextFile(
     const char* filename, unsigned long* size)
@@ -38,7 +44,24 @@ OpenTextFile(
 
     return fh;
 }
+static void
+CloseTextFile(
+    FILE* fh)
+{
+    fclose(fh);
+}
 
+static unsigned long
+ReadFromTextFile(
+    FILE*fh, char* buffer, size_t buffer_size)
+{
+    if(!fh)
+        return 0;
+    
+    unsigned long count = (unsigned long)fread(buffer, buffer_size, 1, fh);
+    buffer[buffer_size] = '\0';
+    return count;
+}
 static int
 ReadLineByLineFromTextFile(
     const char *filename, unsigned long *size,  int *linesizes)
@@ -50,77 +73,74 @@ ReadLineByLineFromTextFile(
     char *line = NULL;
     int count = 0;
     linesizes[count] = 0;
-    count++;
+    //count++;
     size_t length;
     ssize_t nread;
     while((nread = getline(&line, &length, fh)) != -1)
     {
-        linesizes[count] = linesizes[count-1] + nread;
-        printf("\n%d Length = %d", count-1, nread);
+        if(count != 0)
+           linesizes[count] = linesizes[count-1] + nread;
+        else
+            linesizes[0] = nread;
+//        printf("\n%d Length = %d", count-1, nread);
         count++;
     }
     free(line);
     fclose(fh);
-    printf("\nNumber of lines read = %d", count);
+//    printf("\nNumber of lines read = %d", count);
     return count;
 }
-*/
+static char *
+LoadTextFromFile( const char *filename, unsigned long *size /* returned file size in bytes */)
+{
+    FILE* fh = OpenTextFile(filename, size);
+    unsigned long bytes = (*size);
+    char *text = (char*)malloc(bytes + 1);
+    if(!text)
+        return 0;
+    ReadFromTextFile(fh, text, bytes);
+    CloseTextFile(fh);
+    return text;
+}
 int main(int argc, char** argv)
 {
+    if(argc < 3)
+    {
+        printf("Usage: ./matchCuda <patternfilename> <searchfilename>");
+    }
+    unsigned long* results = 0;         // number of patterns found in search buffer
+    //unsigned long results_count = 6;    // total number of results expected 
+    char* pattern_string = 0;           // pattern string in host memory
+    unsigned long pattern_length = 0;   // length of pattern string (in bytes)
 
+    char* search_string = 0;            // search string in host memory
+    unsigned long search_length = 0;    // length of search string (in bytes)
+    
+    int *linesizes;                     // Array of offsets of new lines in file buffer
+    
+    double loadStartTime = CycleTimer::currentSeconds();
+    linesizes = (int *) calloc(MAX_NUMBER_OF_LINES, sizeof(int));
 
-    //int number_of_lines_read = ReadLineByLineFromTextFile(argv[1], &search_length,  linesizes ); 
-    char *regex = "aaa?";
-    char *search_string = "aaaaa";
+    pattern_string = argv[1];
+    pattern_length = strlen(pattern_string);
+    if (pattern_string == NULL || pattern_length < 1)
+    {
+        printf("Reading pattern failed\n");
+        return -1;
+    }
+    search_string = LoadTextFromFile(argv[2], &search_length);
+    if (search_string == NULL || search_length < 1)
+    {
+        printf("Reading search failed\n");
+        return -1;
+    }
+   
+    int number_of_lines_read = ReadLineByLineFromTextFile(argv[2], &search_length,  linesizes ); 
+    double loadEndTime = CycleTimer::currentSeconds();
+    
     int result;
-    regexMatchCuda(regex, strlen(regex), search_string, strlen(search_string), &result);
-    // int i;
-    // char *post;
-    // State *start;
+    regexMatchCuda(pattern_string, pattern_length ,search_string, search_length, linesizes, number_of_lines_read, &result);
 
-    // if(argc < 3){
-    //     fprintf(stderr, "usage: nfa regexp string...\n");
-    //     return 1;
-    // }
-
-    // post = re2post(argv[1]);
-    // if(post == NULL){
-    //     fprintf(stderr, "bad regexp %s\n", argv[1]);
-    //     return 1;
-    // }
-
-    // start = post2nfa(post);
-    // if(start == NULL){
-    //     fprintf(stderr, "error in post2nfa %s\n", post);
-    //     return 1;
-    // }
-    // start_state = start;
-    // l1.s = malloc(nstate*sizeof l1.s[0]);
-    // l2.s = malloc(nstate*sizeof l2.s[0]);
-    // Adding file input checking line by line
-
-   //  int N = 20 * 1000 * 1000;
-
-   //  const float alpha = 2.0f;
-   //  float* xarray = new float[N];
-   //  float* yarray = new float[N];
-   //  float* resultarray = new float[N];
-
-   //  // load X, Y, store result
-   //  for (int i=0; i<N; i++) {
-   //      xarray[i] = yarray[i] = i % 10;
-   //      resultarray[i] = 0.f;
-   // }
-
-   //  printCudaInfo();
-
-   //  for (int i=0; i<3; i++) {
-   //    saxpyCuda(N, alpha, xarray, yarray, resultarray);
-   //  }
-
-   //  delete [] xarray;
-   //  delete [] yarray;
-   //  delete [] resultarray;
-
+    printf("Data Processing time %.3f ms\t\n", 1000.f * (loadEndTime-loadStartTime));
     return 0;
 }
