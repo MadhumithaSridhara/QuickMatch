@@ -1,7 +1,6 @@
 This version of Quickmatch only matches whole words(not regexes) and has only 
 tested on a Mac. Requires you to include the path to the following to be able to
 run:
-/afs/andrew.cmu.edu/usr16/madhumit/private/Parallel-Comp-Arch/QuickMatch/QuickMatch/OpenCL
 export HARCH=`echo $(uname -m) | sed "s/i./x/g"`
 export PATH=$PATH:/System/Library/Frameworks/OpenCL.framework/Headers/
 export PATH=$PATH:/System/Library/Frameworks/OpenCL.framework/Libraries
