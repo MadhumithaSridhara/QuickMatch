@@ -114,7 +114,7 @@ struct State
 __constant__ State matchstate = { Match };   /* matching state */
 __shared__ int nstate;
 
-__shared__ State states[100];
+__shared__ State states[500];
 
 /* Allocate and initialize State */
     __device__ __inline__ State*
@@ -274,7 +274,7 @@ post2nfa(char *postfix)
 typedef struct List List;
 struct List
 {
-    State *s[100];
+    State *s[500];
     int n;
 };
 //__shared__ int listid;
@@ -479,6 +479,8 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
     //
     double startTime = CycleTimer::currentSeconds();
     cudaMalloc(&device_regex, sizeof(char)*(regex_length+1));
+    
+    double startTime2 = CycleTimer::currentSeconds();
     cudaMalloc(&device_search_string, sizeof(float)*(search_string_length+1));
     cudaMalloc(&device_linesizes, sizeof(int)*(MAX_NUMBER_OF_LINES));
 
@@ -528,9 +530,15 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
      double overallDuration = endTime - startTime;
      double kernelDuration = kernelEndTime - kernelStartTime;
      double transferDuration = kernelStartTime - startTime + endTime - kernelEndTime;
-     printf("Overall time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
-     printf("Kernel time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
-     printf("Transfer time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * transferDuration, toBW(totalBytes, transferDuration));
+     double firstMallocDuration = startTime2 - startTime;
+     //printf("\nOverall time: %.3f ms\n", 1000.f * overallDuration);
+    // printf("Kernel time: %.3f ms\n", 1000.f * kernelDuration);
+    // printf("Non-kernel (Memcpy+allMalloc) time: %.3f ms\n", 1000.f * transferDuration);
+    // printf("FirstMalloc time: %.3f ms\n", 1000.f * firstMallocDuration);
+     printf("\nOverall time:                     %.3f s\n", overallDuration);
+     printf("Kernel time:                        %.3f s\n", kernelDuration);
+     printf("Non-kernel (Memcpy+allMalloc) time: %.3f s\n", transferDuration);
+     printf("FirstMalloc time:                   %.3f s\n", firstMallocDuration);
 
     //
     // TODO free memory buffers on the GPU
