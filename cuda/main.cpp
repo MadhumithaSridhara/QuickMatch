@@ -6,12 +6,12 @@
 #include <fcntl.h>	
 #include <sys/stat.h>	
 #include "CycleTimer.h"
-#define MAX_NUMBER_OF_LINES 100000
+#define MAX_NUMBER_OF_LINES 20000000
 
 #define THREADS_PER_BLOCK 512
 #define NUMBER_OF_BLOCKS 40
 void regexMatchCuda(char* regex, int regex_length, char* search_string, 
-                int search_string_length, int *linesizes, int number_of_lines,  int* result);   
+                int search_string_length, int *linesizes, int number_of_lines); 
 void printCudaInfo();
 
 // return GB/s
@@ -119,7 +119,6 @@ int main(int argc, char** argv)
     int *linesizes;                     // Array of offsets of new lines in file buffer
     
     double loadStartTime = CycleTimer::currentSeconds();
-    linesizes = (int *) calloc(MAX_NUMBER_OF_LINES, sizeof(int));
 
     pattern_string = argv[1];
     pattern_length = strlen(pattern_string);
@@ -135,12 +134,13 @@ int main(int argc, char** argv)
         return -1;
     }
    
-    int number_of_lines_read = ReadLineByLineFromTextFile(argv[2], &search_length,  linesizes ); 
     double loadEndTime = CycleTimer::currentSeconds();
+    linesizes = (int *) calloc(MAX_NUMBER_OF_LINES, sizeof(int));
+    int number_of_lines_read = ReadLineByLineFromTextFile(argv[2], &search_length,  linesizes ); 
     
-    int result;
-    regexMatchCuda(pattern_string, pattern_length ,search_string, search_length, linesizes, number_of_lines_read, &result);
+    regexMatchCuda(pattern_string, pattern_length ,search_string, search_length, linesizes, number_of_lines_read);
 
     printf("Data Processing time %.3f ms\t\n", 1000.f * (loadEndTime-loadStartTime));
+    free(linesizes);
     return 0;
 }

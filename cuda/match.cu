@@ -3,9 +3,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <driver_functions.h>
-#define MAX_NUMBER_OF_LINES 100000
+#define MAX_NUMBER_OF_LINES 20000000
 #define THREADS_PER_BLOCK 256
-#define NUMBER_OF_BLOCKS 40
+#define NUMBER_OF_BLOCKS 256
 
 #include "CycleTimer.h"
 
@@ -15,7 +15,7 @@ __device__ __inline__ char*
 re2post(char *re, int regex_length)
 {
     int nalt, natom;
-    char buf[8000];
+    static char buf[8000];
     char *dst;
     struct {
         int nalt;
@@ -405,16 +405,14 @@ match(State *start, char *s, List *l1, List *l2)
     return ismatch(clist);
 }
 
-
+__shared__ char* post;
 __shared__ State *start;
 __global__ void match_kernel(char* regex, int regex_length, char* search_string, int search_string_length,
-                    int *linesizes, int number_of_lines, int* result) {
+                    int *linesizes, int number_of_lines) {
 
-    char *post;
     // compute overall index from position of thread in current block,
     // and given the block we are in
     int index = blockIdx.x * blockDim.x + threadIdx.x;       
-    List l1, l2;
 
     if(index > number_of_lines-1)
         return;
@@ -423,42 +421,47 @@ __global__ void match_kernel(char* regex, int regex_length, char* search_string,
     if (threadIdx.x == 0) {
        // post = re2post(my_pattern, regex_length);
         post = re2post(regex, regex_length);
-        //printf("Post: %s", regex);
+    //    printf("Regex: %s", regex);
+    //    printf("Post: %s", post);
         start = post2nfa(post);
     }
 
     int offset, end_offset, batchID = 0, batchOffset = 0;
     
     int BatchSize = NUMBER_OF_BLOCKS*THREADS_PER_BLOCK;
+
     __syncthreads(); 
     for(batchID = 0; (batchOffset + threadIdx.x) < number_of_lines; batchID++)
     {
         char my_search_string[120];
         int i = 0;
-        offset = linesizes[max(index-1 + batchOffset, 0)];
+        if(index == 0 && batchID == 0)
+            offset = 0;
+        else
+            offset = linesizes[index-1 + batchOffset];
         end_offset = linesizes[index+batchOffset];
         
-       // printf("\nIndex %d, Offset %d, EOff = %d", index, offset, end_offset);
-        for(int k = offset; k < end_offset; k++, i++)
+        for(int k = offset; k < end_offset; k++)
         {
             my_search_string[i] = search_string[k];
+            i++;
         }
         my_search_string[i] = '\0';
         
         for(i = 0; my_search_string[i] != '\0'; i++)
         {
-            if(match(start, my_search_string+i, &l1, &l2)) {
+           List l1, l2;
+           if(match(start, my_search_string + i, &l1, &l2)) {
                 printf("%s", my_search_string );
-                *result = 1;
                 break;
-            }
+           }
         }
         batchOffset += BatchSize;
     }
 }
 
 void regexMatchCuda(char* regex, int regex_length, char* search_string, 
-                int search_string_length, int *linesizes, int number_of_lines,  int* result) {    
+                int search_string_length, int *linesizes, int number_of_lines) {    
 
     // compute number of blocks and threads per block
     const int threadsPerBlock = THREADS_PER_BLOCK;
@@ -466,22 +469,20 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
 
     char* device_regex;
     char* device_search_string;
-    int* device_result;
     int* device_linesizes;
-    
+   
     //
     // TODO: allocate device memory buffers on the GPU using
     // cudaMalloc.  The started code issues warnings on build because
     // these buffers are used in the call to saxpy_kernel below
     // without being initialized.
     //
+    double startTime = CycleTimer::currentSeconds();
     cudaMalloc(&device_regex, sizeof(char)*(regex_length+1));
     cudaMalloc(&device_search_string, sizeof(float)*(search_string_length+1));
     cudaMalloc(&device_linesizes, sizeof(int)*(MAX_NUMBER_OF_LINES));
-    cudaMalloc(&device_result, sizeof(int));
 
     // start timing after allocation of device memory.
-    double startTime = CycleTimer::currentSeconds();
 
     //
     // TODO: copy input arrays to the GPU using cudaMemcpy
@@ -494,7 +495,7 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
 
     // run match_kernel on the GPU
     match_kernel<<<blocks, threadsPerBlock>>>(device_regex, regex_length, device_search_string, 
-                            search_string_length, device_linesizes, number_of_lines, device_result);
+                            search_string_length, device_linesizes, number_of_lines);
 
     //
     // TODO: insert timer here to time only the kernel.  Since the
@@ -509,8 +510,8 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
     double kernelEndTime = CycleTimer::currentSeconds();
     //
     // TODO: copy result from GPU using cudaMemcpy
-    //
-    cudaMemcpy(result, device_result, sizeof(int), cudaMemcpyDeviceToHost);
+//   
+    //cudaMemcpy(result, device_result, sizeof(int), cudaMemcpyDeviceToHost);
 
     // end timing after result has been copied back into host memory.
     // The time elapsed between startTime and endTime is the total
@@ -536,7 +537,7 @@ void regexMatchCuda(char* regex, int regex_length, char* search_string,
     //
     cudaFree(device_regex);
     cudaFree(device_search_string);
-    cudaFree(device_result);
+//    cudaFree(device_result);
 }
 
 void
