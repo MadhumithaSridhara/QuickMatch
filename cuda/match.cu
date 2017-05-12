@@ -4,23 +4,18 @@
 #include <cuda_runtime.h>
 #include <driver_functions.h>
 #define MAX_NUMBER_OF_LINES 100000
-#define THREADS_PER_BLOCK 512
+#define THREADS_PER_BLOCK 256
 #define NUMBER_OF_BLOCKS 40
 
 #include "CycleTimer.h"
 
 extern float toBW(int bytes, float sec);
 
-/*
- * Convert infix regexp re to postfix notation.
- * Insert . as explicit concatenation operator.
- * Cheesy parser, return static buffer.
- */
-    __device__ __inline__ char*
+__device__ __inline__ char*
 re2post(char *re, int regex_length)
 {
     int nalt, natom;
-    static char buf[8000];
+    char buf[8000];
     char *dst;
     struct {
         int nalt;
