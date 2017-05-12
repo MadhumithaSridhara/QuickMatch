@@ -1,4 +1,5 @@
 ## [Project Checkpoint](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
+## [Project Report](https://madhumithasridhara.github.io/QuickMatch/FinalReport)
 ## Project Proposal
 ### Overview
 QuickMatch implements and evaluates parallel regular expression matching on GPUs. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. 
