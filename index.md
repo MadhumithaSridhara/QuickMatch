@@ -102,14 +102,14 @@ Regex: 6?7?8?2
 
 In this case, the QuickMatch implementation is on par with egrep and outperforms the perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spending in matching each line) and arithmetic intensity is higher favoring the GPU.
 
-### Test-case 4: Simple regex in Text file
+### TestCase 4: Simple regex in Text file
 Dataset: Jane Austen Novel Text (~720KB)
 
 Regex: L?y?dia \| Collins
 
 In this test-case QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurrences implies that there are many "step forward - backtrack" occurrences in a subset of the threads while the other SIMD lanes are just waiting. Random occurrences will always show such SIMD divergence.
 
-### Test-case 5: Small regex in Text file
+### TestCase 5: Small regex in Text file
 Dataset: Jane Austen Novel Text duplicated many times (~59MB)
 
 Regex: L?y+ (Very frequent matches potentially early in each line)
