@@ -94,11 +94,18 @@ Regex: L?y+ (Very frequent matches potentially early in each line)
 
 <<Insert Graph 5>>
 
-In this testcase, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurences of letter 'y' will match apart from just Lydia). 
+In this testcase, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurences of letter 'y' will match apart from just Lydia). (Also this result verifies the claim that Perl performs increasingly worse when the dataset size increases)
 
 
-#### Inferences
-The biggest observation from all the testcases we ran is that the performance is extremely input dependent. 
+#### Result Analysis
+The biggest observation from all the testcases we ran is that the performance is extremely input dependent. The relative performance observed will dependent on how uniform the different lines in the file are, how often the pattern occurs and the size of the dataset. 
+These results suggest that while QuickMatch performs better than its baseline serial implementatiion, it does not outperform the CPU egrep solution in spite of exploiting parallellism. This encouraged us to look deeper into the break up of the QuickMatch execution time using NVProf and instrumentation.
+
+
+The following graph shows the break up of execution times for QuickMatch for the testcases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. 
+We can exclude the time taken in the first CudaMalloc from our performance measurements. 
+
+The graph below shows speedup of each implemenentation with respect to the baseline optimized( C -O3) serial NFA implementation. QuickMatch performs on an average ~7x better than egrep and on an average ~30x better than the serial implementation.
 
 
 
