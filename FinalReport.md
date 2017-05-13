@@ -28,6 +28,11 @@ However, for completeness and accuracy, threads process lines in batches. Batchs
 
 Note: The match implemented in Russ Cox's algorithm only matches from start of line. Thus the match function has to be called multiple times with different start positions of the line so that the matching is done for the whole line.
 
+Data Structures:
+The NFA itself is a complex datastructure with many pointer indirections. It is represented as a graph using linkedLists
+<<ELaborate here>>
+
+The 
 ### Analysis
 
 
