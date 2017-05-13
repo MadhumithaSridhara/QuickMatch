@@ -44,15 +44,15 @@ The application does not exhibit any kind of temporal locality as the accesses a
 
 We evaluated our algorithm on the GHC machines, using the NVIDIA GTX1080 GPU. We used the C programming language along with CUDA for our implementation.
 
-Originally, we planned to implement the algorithm using OpenCL, targeting both NVIDIA as well as Intel GPUs. We started out by writing a simple whole-word matching algorithm which does not actually use the NFA construction approach, and got the algorithm to work and tested it out on our local Intel machine Graphics Card. The implementation of the NFA construction involves using complex data structures like struct pointers, double indirections to other structures inside a structure, and a fair amount of dynamic memory allocation to build each state and connect them together in sort of a linked list way. When we tried to implement this on OpenCL, we found that we could not do the construction on the host and send it over to the GPU due to lack of same address space, and the fact that OpenCL allows copying only contiguous bytes of data from memory from the host to the GPU. So, we tried to fix this by constructing the NFA on the GPU itself, after modifying the algorithm to remove dynamic memory allocation, but it turns out that OpenCL v1.2 (That is supported on our laptops as well as the GHC machines) do not provide write access to the shared device memory, which is accessible across the kernel and the inline device functions. OpenCL 2.0 seems to allow sharing. Finally we decided not to spend more time on this, but rather went ahead to implement the algorithm using CUDA.
+Originally, we planned to implement the algorithm using OpenCL, targeting both NVIDIA as well as Intel GPUs. We started out by writing a simple whole-word matching algorithm which does not actually use the NFA construction approach, and got the algorithm to work and tested it out on our local Intel machine Graphics Card. The implementation of the NFA construction involves using complex data structures like struct pointers, double indirections to other structures inside a structure, and a fair amount of dynamic memory allocation to build each state and connect them together in sort of a linked list way. When we tried to implement this on OpenCL, we found that we could not do the NFA construction on the host and send it over to the GPU due to lack of same address space, and the fact that OpenCL allows copying only contiguous bytes of data from memory from the host to the GPU. So, we tried to fix this by constructing the NFA on the GPU itself, but it turns out that OpenCL v1.2 (supported on our laptops as well as the GHC machines) do not provide write access to the shared device memory, which is accessible across the kernel and the inline device functions. OpenCL 2.0 seems to allow sharing. Finally we decided not to spend more time on this and went ahead to implement the algorithm using CUDA.
 
 We had to change the starter code quite a bit in order to make it work on CUDA. Russ Cox's implementation did not handle whole-word matching in any given string. We had to change this so that our algorithm matches whole-word. We did this by basically starting from each character of a given line to check for the pattern match rather than just start from the beginning of the line. (The original implementation fails to match "hello" in "world hello", as it breaks out after the first letter mismatch. We start the match at each letter of "world hello", and finish only when there are no matches anywhere). Another major issue we faced was that the algorithm was recursive in nature. We had to change this to an iterative version so that it is amenable to CUDA. We did this by maintaining a custom stack of our own while adding new states to the NFA during its construction. 
 
 
 ## Algorithm
-The implementation is as follows:
+Our implementation on CUDA is as follows:
 Input: A regular expression and search file
-Output: Lines with a matching regex pattern in them are printed to stdout
+Output: Lines with a matching regex pattern
 
 * Read the file into a buffer called 'search_string' (char *)
 * Find the start offsets of different lines in the buffer by reading the file line by line. Save the offsets into an array called 'linesizes' (int *)
@@ -61,14 +61,14 @@ Output: Lines with a matching regex pattern in them are printed to stdout
 Match Kernel Implementation:
 * In each CUDA thread block, one thread (threadIdx.x == 0) constructs the NFA from the Regex and saves it in a block __shared__ state. 
 * Once the NFA is ready (read syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
-* The matching is performed on this substring and the NFA in the shared state.
+* The match is performed on this substring using the NFA states present in shared memory.
 
-For completeness and accuracy, threads process lines in batches. Batch-size = NUMBER_OF_BLOCKS\*NUMBER of THREADS per Block. 
+For completeness and accuracy, threads process lines in batches. Batch-size = NUMBER_OF_BLOCKS\*THREADS_PER_BLOCK. 
 After multiple rounds of tuning and optimizations we found that the optimal number of threads per block is 256 and the optimal number of blocks is 80 for the Nvidia GTX1080 hardware architecture.
 
 
 ## Results
-QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The test-cases were varied in the following aspects:
+QuickMatch implementation is compared against perl, egrep and the baseline sequential implementation. The test-cases were varied in the following aspects:
 
 1) Size of Search File
 
@@ -85,19 +85,13 @@ Note:All test-cases in this section are run on the Nvidia GTX1080 GPUs on the GH
 ### TestCase 1: Many Matches in a Sparse Matrix file
 Dataset: Sparse Matrix (~160 MB)
 
-Regex: '1'
-Find the occurrence of the digit one in the file
-
-
-
-QuickMatch performs much better than all implementations (Execution time is lesser) apart from egrep. The good performance of the QuickMatch implementation can be attributed to the fact that all threads are doing almost uniform work. Almost every thread finds a match and since the line lengths are short and uniform in this dataset, no threads wait too long to exit. This uniform workload and reduced SIMD divergence boosts the performance of QuickMatch
+Regex: "1" - Find the occurrence of the digit one in the file
+QuickMatch performs much better than all implementations (Execution time is lesser) apart from egrep. This speedup of the QuickMatch implementation can be attributed to the fact that all threads are doing almost uniform work. Almost every thread finds a match and since the line lengths are short and uniform in this dataset, no threads wait too long to exit. This uniform workload and reduced SIMD divergence boosts the performance of QuickMatch
 
 ### TestCase 2: No Matches in a sparse Matrix file
 Dataset: Sparse Matrix(~160MB)
 
 Regex: "Word"
-
-
 
 QuickMatch beats all implementations apart from egrep again. Again, this is a case of low SIMD divergence and uniform workload. None of the participating threads move towards the match state.
 
@@ -106,40 +100,28 @@ Dataset: Sparse Matrix (~160MB)
 
 Regex: 6?7?8?2 
 
-
-In this case, the QuickMatch implementation is on par with egrep and outperforms the Perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spending in matching each line) and arithmetic intensity is higher favoring the GPU.
-
+In this case, the QuickMatch implementation is on par with egrep and outperforms the perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spending in matching each line) and arithmetic intensity is higher favoring the GPU.
 
 ### Test-case 4: Simple regex in Text file
 Dataset: Jane Austen Novel Text (~720KB)
 
-Regex: (L\?y\?dia \| Collins)
+Regex: L?y?dia \| Collins
 
-Protagonists - non-uniform occurrences
-
-
-
-In this test-case QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurrences implies that there are many step forward - backtrack occurrences in a subset of the threads while the other SIMD lanes are just waiting. Random occurrences will always show such SIMD divergence.
-
+In this test-case QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurrences implies that there are many "step forward - backtrack" occurrences in a subset of the threads while the other SIMD lanes are just waiting. Random occurrences will always show such SIMD divergence.
 
 ### Test-case 5: Small regex in Text file
 Dataset: Jane Austen Novel Text duplicated many times (~59MB)
 
 Regex: L?y+ (Very frequent matches potentially early in each line)
 
-
-
-In this test-case, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurrences of letter 'y' will match apart from just Lydia). (Also this result verifies the claim that Perl performs increasingly worse when the dataset size increases)
-
+In this test-case, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurrences of letter 'y' will match apart from just Lydia). (This result also verifies the claim that Perl performs increasingly worse when the dataset size increases)
 
 ### Result Analysis
-The biggest observation from all the test-cases we ran is that the performance is extremely input dependent. The relative performance observed will dependent on how uniform the different lines in the file are, how often the pattern occurs and the size of the dataset. 
-These results suggest that while QuickMatch performs better than its baseline serial implementation, it does not outperform the CPU egrep solution in spite of exploiting parallelism. This encouraged us to look deeper into the break up of the QuickMatch execution time using NVProf and instrumentation.
+The biggest observation from all the test-cases we ran is that the performance is input dependent. The relative performance observed will dependent on how uniform the different lines in the file are, how often the pattern occurs and the size of the dataset. 
 
+The above results suggest that while QuickMatch performs better than its baseline serial implementation, it does not outperform the CPU egrep solution in spite of exploiting parallelism. This encouraged us to look deeper into the break up of the QuickMatch execution time using NVProf and instrumentation.
 
-The following graph shows the break up of execution times for QuickMatch for the test-cases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. 
-We can exclude the time taken in the first CudaMalloc from our performance measurements. 
-
+The following graph shows the break up of execution times for QuickMatch for the test-cases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. We can exclude the time taken in the first CudaMalloc from our performance measurements. 
 
 ![](Breakdown.png?raw=true?style=centerme)
 
