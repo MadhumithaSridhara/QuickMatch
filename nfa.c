@@ -356,18 +356,6 @@ step(List *clist, int c, List *nlist)
 		if(s->c == c) {
 			//printf("Adding state\n");
 			addstate(nlist, s->out);
-		} else {
-			// testing code
-			//printf("Lastlist : %d, listid : %d\n", s->lastlist, listid);
-			//printf("Character value : %d\n", s->c);
-			if (s->lastlist == (listid -1) && s->c == Match) {
-				//printf("Adding matchstate\n");
-				addstate(nlist, &matchstate);
-			} else {
-				// Remove everything from list and start over
-				restartlist(nlist);
-				break;
-			}
 		}
 	}
 }
@@ -386,6 +374,9 @@ match(State *start, char *s)
 		c = *s & 0xFF;
 		step(clist, c, nlist);
 		t = clist; clist = nlist; nlist = t;	/* swap clist, nlist */
+		if (ismatch(clist)) {
+			return 1;
+		}
 	}
 	return ismatch(clist);
 }
@@ -393,7 +384,7 @@ match(State *start, char *s)
 int
 main(int argc, char **argv)
 {
-	int i;
+
 	char *post;
 	State *start;
 
@@ -430,13 +421,15 @@ main(int argc, char **argv)
 
 	while ((read = getline(&line, &len, fp)) != -1) {
 		line[read-1] = '\0';
-	    if(match(start, line))
-			printf("%s\n", line);
+		for (i=0; i<read; i++) {
+			if(match(start, line+i)) {
+				printf("%s\n", line);
+				break;
+			}
+		}
 	}
 
    	free(line);
-
-	//for(i=2; i<argc; i++)
 		
 	return 0;
 }
