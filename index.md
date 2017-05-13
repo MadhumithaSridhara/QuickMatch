@@ -4,14 +4,14 @@
 We implemented and evaluated Parallel Regular Expression matching on NVIDIA GTX1080 GPU, using CUDA. The implementation parallelizes Regular Expression matching across lines in a file. Our implementation achieves ~7x speedup over egrep and ~30x speedup over the optimized sequential implementation
 
 
-## Applications and Motivation
-Regex matching is used in applications in Log mining, DNA Sequencing and Spam filters etc. It would be useful to improve the performance of these applications as they often run on huge datasets. The parallelism in Regex Matching comes from the following aspects:
-* Matching Different Lines in a file can be done completely in parallel
-* There are no communication or synchronization overheads in parallelization as there are no dependencies between different lines
+## Motivation
+Regex matching is used in applications such as Log mining, DNA Sequencing and Spam filters etc. It would be useful to improve the performance of these applications as they often run on huge datasets. The parallelism in Regex Matching comes from the following aspects:
+* Inherent data parallelism - Matching Different Lines in a file can be done completely in parallel
+* No communication or synchronization overheads in parallelization as there are no dependencies between different lines
 
 ## Background
-The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction \[[2](https://swtch.com/~rsc/regexp/nfa.c.txt)\]. The key data structures used in the sequential algorithm are:
-* The states of the NFA. Maintained as a linked list. Each node has pointers to the two possible states it can attain at any given point, and the actual character which is in that state. In terms of how this applies to our parallel implementation, the whole linked list(tree structure) will be constructed once by a single thread and be accessed(read only) by all the threads of that block. 
+QuickMatch regex matching is based on Thompson's Non-deterministic Finite Automaton (NFA). This algorithm constructs a finite state machine given a regex. The data to be matched is run through this state machine character by character, and the final state reached determines whether or not the string matched the Regex. The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction \[[2](https://swtch.com/~rsc/regexp/nfa.c.txt)\]. The key data structures used in the sequential algorithm are:
+* The states of the NFA maintained as a linked list. Each node has pointers to the two possible states it can attain at any given point, and the actual character which is in that state. In terms of how this applies to our parallel implementation, the whole linked list(tree structure) will be constructed once by a single thread and be accessed(read only) by all the threads of the same block. 
 
 ```
 struct State {
@@ -41,7 +41,6 @@ The part that is computationally intensive is not the actual construction of the
 The application does not exhibit any kind of temporal locality as the accesses are unique for each input character in each line, also, there isn't a whole lot of spatial locality either.
 
 ## Approach
-QuickMatch regex matching is based on Thompson's Non-deterministic Finite Automaton (NFA). This algorithm constructs a finite state machine given a regex. The data to be matched is run through this state machine character by character, and the final state reached determines whether or not the string matched the Regex.
 
 We evaluated our algorithm on the GHC machines, using the NVIDIA GTX1080 GPU. We used the C programming language along with CUDA for our implementation.
 
