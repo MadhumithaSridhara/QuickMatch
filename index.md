@@ -1,6 +1,6 @@
+## [Project Proposal](https://madhumithasridhara.github.io/QuickMatch/)
 ## [Project Checkpoint](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
-## [Project Report](https://madhumithasridhara.github.io/QuickMatch/FinalReport)
-## Project Proposal
+## Project Report
 ### Overview
 QuickMatch implements and evaluates parallel regular expression matching on GPUs. Regular expression matching on a large number of files is an embarassingly parallel operation. In this project we explore parallellism in matching regular expressions across files as well as parallellism in searching for expressions within files. Our implementation is based on running parallel instances of a regex engine based on Thompson's NFA. 
 Simple QuickMatch for whole word matching was implemented in OpenCL and tested on Intel integrated graphics cards. Full regex matching requires the use of complex pointer data structures which are not supported on OpenCL. Hence the full-regex matching using Thompson's NFA was implemented using CUDA and tested on the GHC cluster.
