@@ -61,6 +61,8 @@ In this section we discuss a few interesting testcases out of the many combinati
 
 Note:All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
 
+![](Comparison.png?raw=true?style=centerme)
+
 ### TestCase 1: Many Matches in a Sparse Matrix file
 Dataset: Sparse Matrix (~160 MB)
 
@@ -116,6 +118,9 @@ These results suggest that while QuickMatch performs better than its baseline se
 
 The following graph shows the break up of execution times for QuickMatch for the testcases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. 
 We can exclude the time taken in the first CudaMalloc from our performance measurements. 
+
+
+![](Breakdown.png?raw=true?style=centerme)
 
 The graph below shows speedup of each implemenentation with respect to the baseline optimized( C -O3) serial NFA implementation. QuickMatch performs on an average ~7x better than egrep and on an average ~30x better than the serial implementation.
 
