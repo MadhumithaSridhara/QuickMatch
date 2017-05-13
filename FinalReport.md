@@ -50,9 +50,12 @@ Output: Lines with a matching regex pattern in them are printed to stdout
 
 Match Kernel Implementation:
 * In each cuda thread block, one thread (threadIdx.x == 0) constructs the NFA from the Regex and saves it in a block __shared__ state. 
-* Once the NFA is ready (read __syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
+* Once the NFA is ready (read syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
 * The matching is performed on this substring and the NFA in the shared state.
-However, for completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS*NUMBER of THREADS per Block. 
+
+For completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS\*NUMBER of THREADS per Block. 
+After multiple rounds of tuning and optimizations we found that the optimal number of threads per block is 256 and the optimal number of blocks is 80 for the Nvidia GTX1080 hardware architecture.
+
 
 ## Results
 QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
