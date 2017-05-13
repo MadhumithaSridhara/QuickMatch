@@ -45,13 +45,7 @@ Match Kernel Implementation:
 * The matching is performed on this substring and the NFA in the shared state.
 However, for completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS*NUMBER of THREADS per Block. 
 
-Data Structures:
-The NFA itself is a complex datastructure with many pointer indirections. It is represented as a graph using linkedLists
-<<ELaborate here>>
-
-The 
-
-### Results
+## Results
 QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
 
 1) Size of Search File
@@ -66,6 +60,7 @@ Note:All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC
 
 ### TestCase 1: Many Matches in a Sparse Matrix file
 Dataset: Sparse Matrix (~160 MB)
+
 Regex: '1'
 Find the occurence of the digit one in the file
 
@@ -75,6 +70,7 @@ QuickMatch performs much better than all implementations (Execution time is less
 
 ### TestCase 2: No Matches in a sparse Matrix file
 Dataset: Sparse Matrix(~160MB)
+
 Regex: "Word"
 
 
@@ -83,6 +79,7 @@ QuickMatch beats all implementations apart from egrep again. Again, this is a ca
 
 ### TestCase 3: Regex Number Match in Sparse Matrix file
 Dataset: Sparse Matrix (~160MB)
+
 Regex: 6?7?8?2 
 
 
@@ -91,6 +88,7 @@ In this case, the QuickMatch implementation is on par with egrep and outperforms
 
 ### Testcase 4: Simple regex in Text file
 Dataset: Jane Austen Novel Text (~720KB)
+
 Regex: L?y?dia | Collins (Protogonists - non-uniform occurrences)
 
 
@@ -100,6 +98,7 @@ In this testcase QuickMatch performs worse than the other implementations. This 
 
 ### Testcase 5: Small regex in Text file
 Dataset: Jane Austen Novel Text duplicated many times (~59MB)
+
 Regex: L?y+ (Very frequent matches potentially early in each line)
 
 
