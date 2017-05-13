@@ -113,7 +113,8 @@ In this case, the QuickMatch implementation is on par with egrep and outperforms
 ### Test-case 4: Simple regex in Text file
 Dataset: Jane Austen Novel Text (~720KB)
 
-Regex: L?y?dia | Collins (Protagonists - non-uniform occurrences)
+Regex: (L\?y\?dia | Collins)
+Protagonists - non-uniform occurrences
 
 
 
