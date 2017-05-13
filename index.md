@@ -1,6 +1,6 @@
 ## [Project Proposal](https://madhumithasridhara.github.io/QuickMatch/proposal)
 ## [Project Checkpoint](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
-## Project Report
+## Final Project Report
 We implemented and evaluated Parallel Regular Expression matching on NVIDIA GTX1080 GPU, using CUDA. The implementation parallelizes Regular Expression matching across lines in a file. Our implementation achieves ~7x speedup over egrep and ~30x speedup over the optimized sequential implementation
 
 
