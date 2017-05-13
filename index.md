@@ -23,7 +23,7 @@ struct State {
 
 ![](state_img.png?raw=true?style=centerme)
 
-* Two list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex, one is a list currently being processed, the other is a list processed in the previous loop iteration, used for comparison. This is local to each of the threads, so it cannot be shared across threads.
+* Two lists maintaining all the states possible to be visited for a particular input string while matching a given string with the regex, one is a list currently being processed, the other is a list processed in the previous loop iteration, used for comparison. This is local to each of the threads, so it cannot be shared across threads.
 
 ```
 struct List
