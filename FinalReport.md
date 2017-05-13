@@ -124,6 +124,7 @@ We can exclude the time taken in the first CudaMalloc from our performance measu
 
 The graph below shows speedup of each implemenentation with respect to the baseline optimized( C -O3) serial NFA implementation. QuickMatch performs on an average ~7x better than egrep and on an average ~30x better than the serial implementation.
 
+![](Speedup.png?raw=true?style=centerme)
 
 
 
