@@ -149,6 +149,11 @@ The graph below shows speedup of each implemenentation with respect to the basel
 
 
 
+### References
+1. [Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.](https://dx.doi.org/10.1145%2F363347.363387)
+2. [Implementing Regular Expressions. N.p., n.d. Web.](https://swtch.com/~rsc/regexp/regexp1.html)
 
+### TEAM
+Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
 
 
