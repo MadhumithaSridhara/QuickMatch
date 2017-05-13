@@ -41,10 +41,16 @@ The
 
 ### Results
 QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
+
 1) Size of Search File
+
 2) Complexity of Regular Expression
+
 3) Frequency of pattern in the file ( Many matches versus few matches ).
-All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
+
+In this section we discuss a few interesting testcases out of the many combinations of the above parameters.
+
+Note:All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
 
 #### TestCase 1: Many Matches in a Sparse Matrix file
 Dataset: Sparse Matrix (~160 MB)
@@ -72,7 +78,30 @@ Regex: 6?7?8?2
 In this case, the QuickMatch implementation is on par with egrep and outperforms the Perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spenting in matching each line) and arithmetic intensity is higher favouring the GPU.
 
 
-#### Testcase 4: 
+#### Testcase 4: Simple regex in Text file
+Dataset: Jane Austen Novel Text (~720KB)
+Regex: L?y?dia | Collins (Protogonists - non-uniform occurrences)
+
+<<Insert graph 4>>
+
+In this testcase QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurences implies that there are many step forward - backtrack occurences in a subset of the threads while the other SIMD lanes are just waiting. Random occurences will always show such SIMD divergence.
+
+
+#### Testcase 5: Small regex in Text file
+Dataset: Jane Austen Novel Text duplicated many times (~59MB)
+Regex: L?y+ (Very frequent matches potentially early in each line)
+
+
+<<Insert Graph 5>>
+
+In this testcase, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurences of letter 'y' will match apart from just Lydia). 
+
+
+#### Inferences
+The biggest observation from all the testcases we ran is that the performance is extremely input dependent. 
+
+
+
 
 
 
