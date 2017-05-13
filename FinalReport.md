@@ -7,12 +7,19 @@ Regex matching is used in applications in Log mining, DNA Sequencing and Spam fi
 * Matching Different Lines in a file can be done completely in parallel
 * There are no communication or synchronization overheads in parallellization as there are no dependencies between different lines
 
-### Algorithm
+
+### Approach
 QuickMatch regex matching is based on Thompson's Non-deterministic Finite Automaton (NFA). This algorithm constructs a finite state machine given a regex. The data to be matched is run through this state machine character by character, and the final state reached determines whether or not the string matched the Regex.
 
-<<INSERT PIC Here>>
+We evaluated our algorithm on the GHC machines, using the NVIDIA GTX1080 GPU. We used the C programming language along with CUDA for our implementation.
 
-The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction [https://swtch.com/~rsc/regexp/]. The implementation is as follows:
+Originally, we planned to implement the algorithm using OpenCL, targeting both NVIDIA as well as Intel GPUs. We started out by writing a simple whole-word matching algorithm which does not actually use the NFA construction approach, and got the algorithm to work and tested it out on our local Intel machine Graphics Card. The implementation of the NFA construction involves using complex data structures like struct pointers, double indirections to other structures inside a structure, and a fair amount of dynamic memory allocation to build each state and connect them together in sort of a linked list way. When we tried to implement this on OpenCL, we found that we could not do the construction on the host and send it over to the GPU due to lack of same address space, and the fact that OpenCL allows copying only contiguous bytes of data from memory from the host to the GPU. So, we tried to fix this by constructing the NFA on the GPU itself, after modifying the algorithm to remove dynamic memory allocation, but it turns out that OpenCL v1.2 (That is supported on our laptops as well as the GHC machines) do not provide write access to the shared device memory, which is accessible across the kernel and the inline device functions. OpenCL 2.0 seems to allow sharing. Finally we decided not to spend more time on this, but rather went ahead to implement the algorithm using CUDA.
+
+The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction [https://swtch.com/~rsc/regexp/]. We had to change the starter code quite a bit in order to make it work on CUDA. Russ Cox's implementation did not handle whole-word matching in any given string. We had to change this so that our algorithm matches whole-word. We did this by basically starting from each character of a given line to check for the pattern match rather than just start from the beginning of the line. (The original implementation fails to match "hello" in "world hello", as it breaks out after the first letter mismatch. We start the match at each letter of "world hello", and finish only when there are no matches anywhere). Another major issue we faced was that the algorithm was recursive in nature. We had to change this to an iterative version so that it is amenable to CUDA. We did this by maintaining a custom stack of our own while adding new states to the NFA during its construction. 
+
+
+### Algorithm
+The implementation is as follows:
 Input: A regular expression and search file
 Output: Lines with a matching regex pattern in them are printed to stdout
 
@@ -26,13 +33,47 @@ Match Kernel Implementation:
 * The matching is performed on this substring and the NFA in the shared state.
 However, for completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS*NUMBER of THREADS per Block. 
 
-Note: The match implemented in Russ Cox's algorithm only matches from start of line. Thus the match function has to be called multiple times with different start positions of the line so that the matching is done for the whole line.
-
 Data Structures:
 The NFA itself is a complex datastructure with many pointer indirections. It is represented as a graph using linkedLists
 <<ELaborate here>>
 
 The 
-### Analysis
+
+### Results
+QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
+1) Size of Search File
+2) Complexity of Regular Expression
+3) Frequency of pattern in the file ( Many matches versus few matches ).
+All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
+
+#### TestCase 1: Many Matches in a Sparse Matrix file
+Dataset: Sparse Matrix (~160 MB)
+Regex: '1'
+Find the occurence of the digit one in the file
+
+<<Insert graph 1 here>>
+
+QuickMatch performs much better than all implementations (Execution time is lesser) apart from egrep. The good performance of the QuickMatch implementation can be attributed to the fact that all threads are doing almost uniform work. Almost every thread finds a match and since the line lengths are short and uniform in this dataset, no threads wait too long to exit. This uniform workload and reduced SIMD divergence boosts the performance of QuickMatch
+
+#### TestCase 2: No Matches in a sparse Matrix file
+Dataset: Sparse Matrix(~160MB)
+Regex: "Word"
+
+<<Insert graph 2>>
+
+QuickMatch beats all implementations apart from egrep again. Again, this is a case of low SIMD divergence and uniform workload. None of the participating threads move towards the match state.
+
+#### TestCase 3: Regex Number Match in Sparse Matrix file
+Dataset: Sparse Matrix (~160MB)
+Regex: 6?7?8?2 
+
+<<Insert graph 3>>
+
+In this case, the QuickMatch implementation is on par with egrep and outperforms the Perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spenting in matching each line) and arithmetic intensity is higher favouring the GPU.
+
+
+#### Testcase 4: 
+
+
 
 
