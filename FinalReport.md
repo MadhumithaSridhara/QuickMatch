@@ -11,11 +11,13 @@ Regex matching is used in applications in Log mining, DNA Sequencing and Spam fi
 The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction [https://swtch.com/~rsc/regexp/]. The key data structures used in the sequential algorithm are:
 1. The states of the NFA. Maintained as a linked list. Each node has pointers to the two possible states it can attain at any given point, and the actual character which is in that state. In terms of how this applies to our parallel implementation, the whole linked list(tree structure) will be constructed once by a single thread and be accessed(read only) by all the threads of that block. 
 
-```struct State {
+```
+struct State {
   int c;
   State* out;
   State* out1;
-}```
+}
+```
 
 ![](state_img.png?raw=true?style=centerme)
 
