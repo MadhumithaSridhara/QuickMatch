@@ -24,7 +24,16 @@ struct State {
 
 ![](state_img.png?raw=true?style=centerme)
 
-* A list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex. This is local to each of the threads, so it cannot be shared across threads.
+* Two list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex, one is a list currently being proccessed, the other is a list processed in the previous loop iteration, used for comparison. This is local to each of the threads, so it cannot be shared across threads.
+
+```
+struct List
+{
+	State **s;
+	int n;
+};
+List l1, l2;
+```
 
 The algorithm takes in a regex to match, and matches it against the input file/s to check if the pattern exits and outputs the lines where the patterns match. (The same behavior as grep for whole-word matches, and egrep for complex regular expression matches).
 
