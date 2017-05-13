@@ -129,11 +129,14 @@ The graph below shows speedup of each implementation with respect to the baselin
 
 ![](Speedup.png?raw=true?style=centerme)
 
+## Conclusion
+The high variance in relative performance for different datasets and regex inputs suggests that there isn't one solution that fits all use-cases. This is a good argument for a heterogeous application. The application can intelligently choose between the CPU or QuickMatch implementation depending on the nature of the inputs. 
+Alternately, files that have uniformity in lines (such as webpage logs) will perform well with QuickMatch.
 
 
-### References
+## References
 1. [Thompson, Ken. "Programming techniques: Regular expression search algorithm." Communications of the ACM 11.6 (1968): 419-422.](https://dx.doi.org/10.1145%2F363347.363387)
 2. [Implementing Regular Expressions. N.p., n.d. Web.](https://swtch.com/~rsc/regexp/regexp1.html)
 
-### TEAM
+## TEAM
 Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
