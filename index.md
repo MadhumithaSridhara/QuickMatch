@@ -1,14 +1,13 @@
 ## [Project Proposal](https://madhumithasridhara.github.io/QuickMatch/proposal)
 ## [Project Checkpoint](https://madhumithasridhara.github.io/QuickMatch/checkpoint)
 ## Project Report
-## QUICKMATCH
-We implemented and evaluated Parallel Regular Expression matching on NVIDIA GTX1080 GPU. The implementation parallellizes Regular Expression matching accross lines in a file. Our implementation achieves ~7x speedup over EGREP and ~30x speedup over the optimized sequential implementation
+We implemented and evaluated Parallel Regular Expression matching on NVIDIA GTX1080 GPU, using CUDA. The implementation parallelizes Regular Expression matching across lines in a file. Our implementation achieves ~7x speedup over egrep and ~30x speedup over the optimized sequential implementation
 
 
 ## Applications and Motivation
-Regex matching is used in applications in Log mining, DNA Sequencing and Spam filters etc. It would be useful to improve the performance of these applications as they often run on huge datasets. The parallellizabilty of Regex Matching comes from the following aspects:
+Regex matching is used in applications in Log mining, DNA Sequencing and Spam filters etc. It would be useful to improve the performance of these applications as they often run on huge datasets. The parallelism in Regex Matching comes from the following aspects:
 * Matching Different Lines in a file can be done completely in parallel
-* There are no communication or synchronization overheads in parallellization as there are no dependencies between different lines
+* There are no communication or synchronization overheads in parallelization as there are no dependencies between different lines
 
 ## Background
 The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction \[[2](https://swtch.com/~rsc/regexp/nfa.c.txt)\]. The key data structures used in the sequential algorithm are:
@@ -24,7 +23,7 @@ struct State {
 
 ![](state_img.png?raw=true?style=centerme)
 
-* Two list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex, one is a list currently being proccessed, the other is a list processed in the previous loop iteration, used for comparison. This is local to each of the threads, so it cannot be shared across threads.
+* Two list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex, one is a list currently being processed, the other is a list processed in the previous loop iteration, used for comparison. This is local to each of the threads, so it cannot be shared across threads.
 
 ```
 struct List
@@ -37,7 +36,7 @@ List l1, l2;
 
 The algorithm takes in a regex to match, and matches it against the input file/s to check if the pattern exits and outputs the lines where the patterns match. (The same behavior as grep for whole-word matches, and egrep for complex regular expression matches).
 
-The part that is computationally intensive is not the actualy construction of the NFA, since this is done only once, but it is the matching function which gets called repeatedly for each line of the input and checking to see if a particular character matches the regex state. This could definitely be parallelized accross different lines in an input file such that each execution unit performs the regex match on a particular input line of the file it gets assigned to (data parallelism).
+The part that is computationally intensive is not the actual construction of the NFA, since this is done only once, but it is the matching function which gets called repeatedly for each line of the input and checking to see if a particular character matches the regex state. This could definitely be parallelized across different lines in an input file such that each execution unit performs the regex match on a particular input line of the file it gets assigned to (data parallelism).
 
 The application does not exhibit any kind of temporal locality as the accesses are unique for each input character in each line, also, there isn't a whole lot of spatial locality either.
 
@@ -61,16 +60,16 @@ Output: Lines with a matching regex pattern in them are printed to stdout
 * Call the kernel with search_string, linesizes and the lengths of both these arrays
 
 Match Kernel Implementation:
-* In each cuda thread block, one thread (threadIdx.x == 0) constructs the NFA from the Regex and saves it in a block __shared__ state. 
+* In each CUDA thread block, one thread (threadIdx.x == 0) constructs the NFA from the Regex and saves it in a block __shared__ state. 
 * Once the NFA is ready (read syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
 * The matching is performed on this substring and the NFA in the shared state.
 
-For completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS\*NUMBER of THREADS per Block. 
+For completeness and accuracy, threads process lines in batches. Batch-size = NUMBER_OF_BLOCKS\*NUMBER of THREADS per Block. 
 After multiple rounds of tuning and optimizations we found that the optimal number of threads per block is 256 and the optimal number of blocks is 80 for the Nvidia GTX1080 hardware architecture.
 
 
 ## Results
-QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
+QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The test-cases were varied in the following aspects:
 
 1) Size of Search File
 
@@ -78,9 +77,9 @@ QuickMatch implementation is compared against PERL, egrep and the baseline seque
 
 3) Frequency of pattern in the file ( Many matches versus few matches ).
 
-In this section we discuss a few interesting testcases out of the many combinations of the above parameters.
+In this section we discuss a few interesting test-cases out of the many combinations of the above parameters.
 
-Note:All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
+Note:All test-cases in this section are run on the Nvidia GTX1080 GPUs on the GHC machines
 
 ![](Comparison.png?raw=true?style=centerme)
 
@@ -88,7 +87,7 @@ Note:All testcases in this section are run on the Nvidia GTX1080 GPUs on the GHC
 Dataset: Sparse Matrix (~160 MB)
 
 Regex: '1'
-Find the occurence of the digit one in the file
+Find the occurrence of the digit one in the file
 
 
 
@@ -109,41 +108,41 @@ Dataset: Sparse Matrix (~160MB)
 Regex: 6?7?8?2 
 
 
-In this case, the QuickMatch implementation is on par with egrep and outperforms the Perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spenting in matching each line) and arithmetic intensity is higher favouring the GPU.
+In this case, the QuickMatch implementation is on par with egrep and outperforms the Perl implementation. We attribute this to the fact that this regular expression matching is highly compute intensive (a lot more time is spending in matching each line) and arithmetic intensity is higher favoring the GPU.
 
 
-### Testcase 4: Simple regex in Text file
+### Test-case 4: Simple regex in Text file
 Dataset: Jane Austen Novel Text (~720KB)
 
-Regex: L?y?dia | Collins (Protogonists - non-uniform occurrences)
+Regex: L?y?dia | Collins (Protagonists - non-uniform occurrences)
 
 
 
-In this testcase QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurences implies that there are many step forward - backtrack occurences in a subset of the threads while the other SIMD lanes are just waiting. Random occurences will always show such SIMD divergence.
+In this test-case QuickMatch performs worse than the other implementations. This is due to high SIMD divergence (The lines are not in a uniform format. Randomness of occurrences implies that there are many step forward - backtrack occurrences in a subset of the threads while the other SIMD lanes are just waiting. Random occurrences will always show such SIMD divergence.
 
 
-### Testcase 5: Small regex in Text file
+### Test-case 5: Small regex in Text file
 Dataset: Jane Austen Novel Text duplicated many times (~59MB)
 
 Regex: L?y+ (Very frequent matches potentially early in each line)
 
 
 
-In this testcase, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurences of letter 'y' will match apart from just Lydia). (Also this result verifies the claim that Perl performs increasingly worse when the dataset size increases)
+In this test-case, QuickMatch performs better than everything part from egrep. While this suffers from SIMD divergence too, this regex is far more likely to match quickly in a line and exit the thread(all occurrences of letter 'y' will match apart from just Lydia). (Also this result verifies the claim that Perl performs increasingly worse when the dataset size increases)
 
 
 ### Result Analysis
-The biggest observation from all the testcases we ran is that the performance is extremely input dependent. The relative performance observed will dependent on how uniform the different lines in the file are, how often the pattern occurs and the size of the dataset. 
-These results suggest that while QuickMatch performs better than its baseline serial implementatiion, it does not outperform the CPU egrep solution in spite of exploiting parallellism. This encouraged us to look deeper into the break up of the QuickMatch execution time using NVProf and instrumentation.
+The biggest observation from all the test-cases we ran is that the performance is extremely input dependent. The relative performance observed will dependent on how uniform the different lines in the file are, how often the pattern occurs and the size of the dataset. 
+These results suggest that while QuickMatch performs better than its baseline serial implementation, it does not outperform the CPU egrep solution in spite of exploiting parallelism. This encouraged us to look deeper into the break up of the QuickMatch execution time using NVProf and instrumentation.
 
 
-The following graph shows the break up of execution times for QuickMatch for the testcases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. 
+The following graph shows the break up of execution times for QuickMatch for the test-cases mentioned above. We can clearly see that most of the time is spent in CudaMalloc. CudaMalloc is known to take a constant overhead of over 200ms on its first call. 
 We can exclude the time taken in the first CudaMalloc from our performance measurements. 
 
 
 ![](Breakdown.png?raw=true?style=centerme)
 
-The graph below shows speedup of each implemenentation with respect to the baseline optimized( C -O3) serial NFA implementation. QuickMatch performs on an average ~7x better than egrep and on an average ~30x better than the serial implementation.
+The graph below shows speedup of each implementation with respect to the baseline optimized( C -O3) serial NFA implementation. QuickMatch performs on an average ~7x better than egrep and on an average ~30x better than the serial implementation.
 
 ![](Speedup.png?raw=true?style=centerme)
 
@@ -155,5 +154,3 @@ The graph below shows speedup of each implemenentation with respect to the basel
 
 ### TEAM
 Bharath Kumar M J(bjaganna) & Madhumitha Sridhara(madhumit)
-
-
