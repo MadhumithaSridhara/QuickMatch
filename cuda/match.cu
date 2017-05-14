@@ -5,7 +5,7 @@
 #include <driver_functions.h>
 #define MAX_NUMBER_OF_LINES 20000000
 #define THREADS_PER_BLOCK 256
-#define NUMBER_OF_BLOCKS 256
+#define NUMBER_OF_BLOCKS 80 
 
 #include "CycleTimer.h"
 
