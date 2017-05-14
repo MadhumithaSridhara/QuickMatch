@@ -9,13 +9,19 @@ Regex matching is used in applications in Log mining, DNA Sequencing and Spam fi
 
 ## Background
 The starter code for QuickMatch was taken from Russ Cox's implementation of Thompson's NFA Construction [https://swtch.com/~rsc/regexp/]. The key data structures used in the sequential algorithm are:
-1. The states of the NFA. Maintained as a linked list. Each node has pointers to the two possible states it can attain at any given point, and the actual character which is in that state. In terms of how this applies to our parallel implementation, the whole linked list(tree structure) will be constructed once by a single thread and be accessed(read only) by all the threads of that block. 
+* The states of the NFA. Maintained as a linked list. Each node has pointers to the two possible states it can attain at any given point, and the actual character which is in that state. In terms of how this applies to our parallel implementation, the whole linked list(tree structure) will be constructed once by a single thread and be accessed(read only) by all the threads of that block. 
 
-![](state.png?raw=true?style=centerme)
+```
+struct State {
+  int c;
+  State* out;
+  State* out1;
+}
+```
 
 ![](state_img.png?raw=true?style=centerme)
 
-2. A list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex. This is local to each of the threads, so it cannot be shared across threads.
+* A list maintaining all the states possible to be visited for a particular input string while matching a given string with the regex. This is local to each of the threads, so it cannot be shared across threads.
 
 The algorithm takes in a regex to match, and matches it against the input file/s to check if the pattern exits and outputs the lines where the patterns match. (The same behavior as grep for whole-word matches, and egrep for complex regular expression matches).
 
@@ -44,9 +50,12 @@ Output: Lines with a matching regex pattern in them are printed to stdout
 
 Match Kernel Implementation:
 * In each cuda thread block, one thread (threadIdx.x == 0) constructs the NFA from the Regex and saves it in a block __shared__ state. 
-* Once the NFA is ready (read __syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
+* Once the NFA is ready (read syncThreads()), every thread reads from the search string at an offset determined by its global index (blockIdx.x * blockDim.x + threadIdx) and the linesizes array. i.e Thread with global index 0 will read at offset 0 till the length of the first line which is given by 'linesizes[0]'. Thread with global index 1 reads from linesizes[0] till linesizes[1] and so on. The substring of the search string that represents a line is copied to a thread local array
 * The matching is performed on this substring and the NFA in the shared state.
-However, for completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS*NUMBER of THREADS per Block. 
+
+For completeness and accuracy, threads process lines in batches. Batchsize = NUMBER_OF_BLOCKS\*NUMBER of THREADS per Block. 
+After multiple rounds of tuning and optimizations we found that the optimal number of threads per block is 256 and the optimal number of blocks is 80 for the Nvidia GTX1080 hardware architecture.
+
 
 ## Results
 QuickMatch implementation is compared against PERL, egrep and the baseline sequential implementation. The testcases were varied in the following aspects:
